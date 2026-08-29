@@ -4,14 +4,11 @@ import bodyParser from 'body-parser';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SESSION_SECRET = process.env.SESSION_SECRET || 'hckr_secure_secret_key_2024';
-const NODE_ENV = process.env.NODE_ENV || 'development';
+const SESSION_SECRET = 'hckr_secure_secret_key_2024';
+const NODE_ENV = 'production';
 
 // Middleware
 app.use(bodyParser.json());
