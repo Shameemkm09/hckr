@@ -4,9 +4,14 @@ import bodyParser from 'body-parser';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const SESSION_SECRET = process.env.SESSION_SECRET || 'hckr_secure_secret_key_2024';
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Middleware
 app.use(bodyParser.json());
@@ -14,10 +19,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(session({
-  secret: 'hckr_secure_secret_key_2024',
+  secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
+  cookie: {
+    secure: NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: parseInt(process.env.SESSION_TIMEOUT || 86400000)
+  }
 }));
 
 // Auth middleware
@@ -131,4 +140,6 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🔓 HCKR Dashboard running on http://localhost:${PORT}`);
+  console.log(`📡 Environment: ${NODE_ENV}`);
+  console.log(`✅ Server started successfully`);
 });
