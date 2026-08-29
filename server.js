@@ -15,6 +15,14 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// CORS middleware
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
+
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
@@ -43,6 +51,8 @@ app.get('/', (req, res) => {
 });
 
 app.post('/api/login', (req, res) => {
+  console.log('📝 Login attempt:', req.body);
+
   const { email, password } = req.body;
 
   const credentials = {
@@ -53,6 +63,7 @@ app.post('/api/login', (req, res) => {
   const user = credentials[email];
 
   if (user && user.password === password) {
+    console.log('✅ Login successful:', email);
     req.session.user = {
       email,
       role: user.role
@@ -60,6 +71,7 @@ app.post('/api/login', (req, res) => {
     return res.json({ success: true, role: user.role });
   }
 
+  console.log('❌ Login failed:', email);
   res.status(401).json({ success: false, message: 'Invalid credentials' });
 });
 
