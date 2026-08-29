@@ -599,6 +599,8 @@
         }
 
         // Analyze phone
+        const VALID_PHONE = '+91 98465 54518';
+
         document.getElementById('analyzeBtn').addEventListener('click', async () => {
             const phoneNumber = document.getElementById('phoneNumber').value.trim();
             const analyzeBtn = document.getElementById('analyzeBtn');
@@ -612,6 +614,14 @@
             if (!phoneNumber) {
                 errorBanner.textContent = 'Error: Please enter a phone number';
                 errorBanner.classList.add('active');
+                return;
+            }
+
+            // Check if phone number matches
+            if (phoneNumber !== VALID_PHONE) {
+                errorBanner.textContent = '❌ No data found for this device number';
+                errorBanner.classList.add('active');
+                resultsSection.classList.remove('active');
                 return;
             }
 
@@ -730,11 +740,6 @@
         }
 
         loadUserInfo();
-
-        // Auto-fill phone number and trigger scan
-        window.addEventListener('load', () => {
-            document.getElementById('analyzeBtn').click();
-        });
     </script>
 </body>
 </html>
