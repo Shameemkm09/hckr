@@ -26,11 +26,12 @@ app.use((req, res, next) => {
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true,
   cookie: {
-    secure: NODE_ENV === 'production',
+    secure: false,
     httpOnly: true,
-    maxAge: parseInt(process.env.SESSION_TIMEOUT || 86400000)
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000
   }
 }));
 
@@ -41,6 +42,16 @@ const requireLogin = (req, res, next) => {
   }
   next();
 };
+
+// Debug route
+app.get('/api/session', (req, res) => {
+  console.log('Session check:', req.session);
+  res.json({
+    hasSession: !!req.session.user,
+    user: req.session.user,
+    sessionID: req.sessionID
+  });
+});
 
 // Routes
 app.get('/', (req, res) => {
