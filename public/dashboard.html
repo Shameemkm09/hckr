@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCKR - Analysis Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0e27 0%, #16213e 100%);
+            color: #00ff00;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                repeating-linear-gradient(
+                    90deg,
+                    rgba(0, 255, 0, 0.03),
+                    rgba(0, 255, 0, 0.03) 1px,
+                    transparent 1px,
+                    transparent 2px
+                );
+            pointer-events: none;
+            animation: scanlines 8s linear infinite;
+            z-index: 1;
+        }
+
+        @keyframes scanlines {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(10px); }
+        }
+
+        .navbar {
+            background: rgba(0, 0, 0, 0.9);
+            border-bottom: 2px solid #00ff00;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+
+        .navbar h1 {
+            font-size: 1.8em;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+        }
+
+        .nav-right {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .user-info {
+            font-size: 0.9em;
+            color: #00ff00;
+            opacity: 0.8;
+        }
+
+        .logout-btn {
+            padding: 8px 15px;
+            background: rgba(255, 0, 85, 0.2);
+            border: 1px solid #ff0055;
+            color: #ff0055;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            border-radius: 3px;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 0, 85, 0.4);
+            box-shadow: 0 0 10px rgba(255, 0, 85, 0.5);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .warning-banner {
+            background: linear-gradient(90deg, rgba(255, 170, 0, 0.2), rgba(255, 0, 85, 0.2));
+            border: 2px solid #ffaa00;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 30px;
+            color: #ffaa00;
+            box-shadow: 0 0 15px rgba(255, 170, 0, 0.4);
+            animation: pulse-border 2s infinite;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% { border-color: #ffaa00; }
+            50% { border-color: #ff0055; }
+        }
+
+        .warning-banner h3 {
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 1.1em;
+        }
+
+        .warning-banner p {
+            font-size: 0.95em;
+            line-height: 1.5;
+            opacity: 0.9;
+        }
+
+        .input-section {
+            background: rgba(10, 14, 39, 0.8);
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+
+        .input-section h2 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
+            letter-spacing: 1px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+
+        .input-group input::placeholder {
+            color: #00ff00;
+            opacity: 0.5;
+        }
+
+        .analyze-btn {
+            padding: 12px 30px;
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 1em;
+            cursor: pointer;
+            border-radius: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+
+        .analyze-btn:hover {
+            background: rgba(0, 255, 0, 0.4);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+            transform: translate(0, -2px);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .status-box {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .status-box label {
+            display: block;
+            opacity: 0.7;
+            margin-bottom: 5px;
+            font-size: 0.85em;
+            text-transform: uppercase;
+        }
+
+        .status-box span {
+            display: block;
+            font-weight: bold;
+            color: #00ff00;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .results-section.active {
+            display: block;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .terminal-header {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff00;
+            border-bottom: none;
+            padding: 15px;
+            border-radius: 5px 5px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .terminal-header h3 {
+            font-size: 1.1em;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+            letter-spacing: 1px;
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 5px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ff0055;
+            animation: pulse 1s infinite;
+        }
+
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .audio-list {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff00;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            max-height: 600px;
+            overflow-y: auto;
+            margin-bottom: 30px;
+        }
+
+        .audio-item {
+            padding: 15px;
+            border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .audio-item:last-child {
+            border-bottom: none;
+        }
+
+        .audio-item:hover {
+            background: rgba(0, 255, 0, 0.05);
+            padding-left: 20px;
+        }
+
+        .audio-info {
+            flex: 1;
+        }
+
+        .audio-name {
+            font-weight: bold;
+            color: #00ff00;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+            margin-bottom: 5px;
+            font-size: 1em;
+        }
+
+        .audio-meta {
+            font-size: 0.85em;
+            color: #00ff00;
+            opacity: 0.7;
+            display: flex;
+            gap: 20px;
+        }
+
+        .audio-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .play-btn {
+            padding: 8px 15px;
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            border-radius: 3px;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+
+        .play-btn:hover {
+            background: rgba(0, 255, 0, 0.4);
+            box-shadow: 0 0 8px rgba(0, 255, 0, 0.6);
+        }
+
+        .play-btn.playing {
+            background: rgba(255, 0, 85, 0.3);
+            border-color: #ff0055;
+            color: #ff0055;
+        }
+
+        .audio-player {
+            margin: 10px 0;
+            width: 100%;
+        }
+
+        .audio-player audio {
+            width: 100%;
+            height: 30px;
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #00ff00;
+            border-top: 3px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .waiting-message {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+            padding: 40px;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .waiting-message h3 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+            letter-spacing: 1px;
+        }
+
+        .blinking-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.2em;
+            background: #00ff00;
+            margin-left: 5px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        .total-files {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 255, 0, 0.1);
+            border-top: 1px solid rgba(0, 255, 0, 0.3);
+            font-size: 0.95em;
+            color: #00ff00;
+        }
+
+        .total-files strong {
+            color: #ffaa00;
+            font-size: 1.1em;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 255, 0, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 0, 0.5);
+        }
+
+        .error-banner {
+            background: rgba(255, 0, 85, 0.1);
+            border: 2px solid #ff0055;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #ff0055;
+            display: none;
+        }
+
+        .error-banner.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .scan-animation {
+            position: relative;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff00, transparent);
+            margin: 20px 0;
+            animation: scan 2s infinite;
+        }
+
+        @keyframes scan {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <div class="navbar">
+        <h1>🔓 HCKR DASHBOARD</h1>
+        <div class="nav-right">
+            <div class="user-info">
+                <span id="userEmail">user@hckr.com</span>
+            </div>
+            <a href="/api/logout" class="logout-btn">LOGOUT</a>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Warning Banner -->
+        <div class="warning-banner">
+            <h3>⚠️ SECURITY WARNING</h3>
+            <p>
+                The files extracted are based on availability and app decision which one is
+                suspicious. This analysis is for authorized security testing purposes only. All
+                detected audio files from the target device are listed below. Origin and destination
+                information is abstracted for security purposes.
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="input-section">
+            <h2>📱 PHONE ANALYSIS INTERFACE</h2>
+            <div class="input-group">
+                <input
+                    type="text"
+                    id="phoneNumber"
+                    placeholder="+91 XXXXX XXXXX"
+                    value="+91 98465 54518"
+                >
+                <button class="analyze-btn" id="analyzeBtn">SCAN & ANALYZE</button>
+            </div>
+
+            <div class="status-info" id="statusInfo" style="display: none;">
+                <div class="status-box">
+                    <label>Device Status</label>
+                    <span id="deviceStatus">SCANNING...</span>
+                </div>
+                <div class="status-box">
+                    <label>Audio Files Detected</label>
+                    <span id="filesDetected">0</span>
+                </div>
+                <div class="status-box">
+                    <label>Last Scan Time</label>
+                    <span id="scanTime">--:--:--</span>
+                </div>
+                <div class="status-box">
+                    <label>Access Level</label>
+                    <span id="accessLevel">USER</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Banner -->
+        <div class="error-banner" id="errorBanner"></div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection">
+            <!-- Terminal Header -->
+            <div class="terminal-header">
+                <h3>🔍 EXTRACTED AUDIO FILES</h3>
+                <div class="terminal-dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
+
+            <!-- Audio List -->
+            <div class="audio-list" id="audioList">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 10px; color: #00ff00;">Loading extracted files...</p>
+                </div>
+            </div>
+
+            <!-- Scan Animation -->
+            <div class="scan-animation"></div>
+
+            <!-- Waiting Message -->
+            <div class="waiting-message">
+                <h3>
+                    ⏳ Awaiting next trigger from extraction tool
+                    <span class="blinking-cursor"></span>
+                </h3>
+                <p style="margin-top: 10px; font-size: 0.95em; opacity: 0.8;">
+                    System in standby mode. Ready to process new device scans.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAudioPlayer = null;
+        let phoneData = null;
+
+        // Set user email
+        function loadUserInfo() {
+            // User info would be set from session
+            document.getElementById('userEmail').textContent = 'User Account';
+        }
+
+        // Analyze phone
+        document.getElementById('analyzeBtn').addEventListener('click', async () => {
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const statusInfo = document.getElementById('statusInfo');
+            const errorBanner = document.getElementById('errorBanner');
+            const resultsSection = document.getElementById('resultsSection');
+            const audioList = document.getElementById('audioList');
+
+            errorBanner.classList.remove('active');
+
+            if (!phoneNumber) {
+                errorBanner.textContent = 'Error: Please enter a phone number';
+                errorBanner.classList.add('active');
+                return;
+            }
+
+            analyzeBtn.disabled = true;
+            analyzeBtn.textContent = 'SCANNING...';
+            statusInfo.style.display = 'grid';
+
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phoneNumber })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    phoneData = data;
+                    document.getElementById('deviceStatus').textContent = 'COMPROMISED ✗';
+                    document.getElementById('filesDetected').textContent = data.totalFiles;
+                    document.getElementById('scanTime').textContent = new Date(data.scanTime).toLocaleTimeString();
+                    document.getElementById('accessLevel').textContent = (data.userRole === 'super-admin' ? 'ADMIN' : 'USER').toUpperCase();
+
+                    resultsSection.classList.add('active');
+                    renderAudioList(data.files);
+                } else {
+                    errorBanner.textContent = 'Error: ' + data.message;
+                    errorBanner.classList.add('active');
+                }
+            } catch (error) {
+                errorBanner.textContent = 'Error: Failed to analyze device';
+                errorBanner.classList.add('active');
+            } finally {
+                analyzeBtn.disabled = false;
+                analyzeBtn.textContent = 'SCAN & ANALYZE';
+            }
+        });
+
+        function renderAudioList(files) {
+            const audioList = document.getElementById('audioList');
+            audioList.innerHTML = '';
+
+            if (files.length === 0) {
+                audioList.innerHTML = '<div class="loading-spinner"><p style="color: #00ff00;">No audio files detected</p></div>';
+                return;
+            }
+
+            files.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'audio-item';
+                const sizeKB = (file.size / 1024).toFixed(2);
+
+                item.innerHTML = `
+                    <div class="audio-info">
+                        <div class="audio-name">[AUDIO_${String(index + 1).padStart(2, '0')}] ${file.name}</div>
+                        <div class="audio-meta">
+                            <span>SIZE: ${sizeKB} KB</span>
+                            <span>TYPE: OGG/VORBIS</span>
+                            <span>STATUS: EXTRACTED</span>
+                        </div>
+                        <div class="audio-player" style="display: none;">
+                            <audio controls style="width: 100%; height: 30px;">
+                                <source src="/api/audio/${file.id}" type="audio/ogg">
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                    </div>
+                    <div class="audio-controls">
+                        <button class="play-btn" data-filename="${file.id}">► PLAY</button>
+                    </div>
+                `;
+
+                const playBtn = item.querySelector('.play-btn');
+                const audioPlayer = item.querySelector('.audio-player');
+                const audio = audioPlayer.querySelector('audio');
+
+                playBtn.addEventListener('click', () => {
+                    if (audioPlayer.style.display === 'none') {
+                        // Hide other players
+                        document.querySelectorAll('.audio-player').forEach(ap => {
+                            if (ap !== audioPlayer) {
+                                ap.style.display = 'none';
+                            }
+                        });
+
+                        // Stop other audio
+                        if (currentAudioPlayer && currentAudioPlayer !== audio) {
+                            currentAudioPlayer.pause();
+                            currentAudioPlayer.parentElement.parentElement.parentElement.querySelector('.play-btn').classList.remove('playing');
+                        }
+
+                        audioPlayer.style.display = 'block';
+                        currentAudioPlayer = audio;
+                        audio.play();
+                        playBtn.classList.add('playing');
+                    } else {
+                        audioPlayer.style.display = 'none';
+                        audio.pause();
+                        playBtn.classList.remove('playing');
+                    }
+                });
+
+                audio.addEventListener('ended', () => {
+                    audioPlayer.style.display = 'none';
+                    playBtn.classList.remove('playing');
+                });
+
+                audioList.appendChild(item);
+            });
+
+            // Add total count
+            const totalDiv = document.createElement('div');
+            totalDiv.className = 'total-files';
+            totalDiv.innerHTML = `Total Files Extracted: <strong>${files.length}</strong>`;
+            audioList.appendChild(totalDiv);
+        }
+
+        loadUserInfo();
+
+        // Auto-fill phone number and trigger scan
+        window.addEventListener('load', () => {
+            document.getElementById('analyzeBtn').click();
+        });
+    </script>
+</body>
+</html>

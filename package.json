@@ -1,0 +1,19 @@
+{
+  "name": "hacker-phone-analyzer",
+  "version": "1.0.0",
+  "description": "Hacker-themed phone voice analysis dashboard",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "body-parser": "^1.20.2"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
